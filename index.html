@@ -82,10 +82,6 @@
                     <!-- INFO ICON -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:w-6 md:h-6"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                 </button>
-                <button id="btn-reset" class="p-2 md:p-3 bg-slate-800/50 border border-slate-700 hover:border-cyan-500 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] text-slate-400 hover:text-cyan-400 rounded-lg transition-all group" title="SİSTEMİ SIFIRLA">
-                    <!-- REFRESH ICON -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-700 md:w-6 md:h-6"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"></path><path d="M3 3v9h9"></path></svg>
-                </button>
             </div>
         </div>
 
@@ -475,7 +471,6 @@
             winScreen: document.getElementById('win-screen'),
             controlsArea: document.getElementById('controls-area'),
             infoModal: document.getElementById('info-modal'),
-            btnReset: document.getElementById('btn-reset'),
             btnInfo: document.getElementById('btn-info'),
             btnCloseModal: document.getElementById('btn-close-modal'),
             btnStartGame: document.getElementById('btn-start-game'),
@@ -679,7 +674,6 @@
         });
 
         // Buttons
-        dom.btnReset.onclick = () => { state.level = 1; startLevel(); };
         dom.btnDelete.onclick = handleDelete;
         dom.btnDelete.ontouchstart = (e) => { e.preventDefault(); handleDelete(); }; // Touch support
         dom.btnNextLevel.onclick = () => { state.level++; startLevel(); };

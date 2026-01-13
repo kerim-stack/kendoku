@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <!-- Mobilde zoom yapmayı ve klavyenin tetiklenmesini zorlaştıracak ayarlar -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KENDOKU</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Özel Animasyonlar */
+        @keyframes float {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+            animation: float 20s infinite ease-in-out;
+        }
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+            animation-delay: 4s;
+        }
+        
+        /* Genel Ayarlar */
+        body {
+            font-family: 'Courier New', Courier, monospace; /* Mono font */
+            user-select: none; /* Metin seçimini engelle */
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent; /* Mobilde tıklama rengini kaldır */
+            touch-action: manipulation; /* Çift tıklama zoomunu engelle */
+        }
+
+        /* Shake animation for errors */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
+        
+        /* Butonların mobilde daha iyi hissettirmesi için aktif durumu */
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-[#0a0a0f] text-cyan-50 min-h-screen overflow-x-hidden relative flex flex-col items-center justify-center supports-[min-height:100dvh]:min-h-[100dvh]">
+
+    <!-- ARKA PLAN EFEKTLERİ -->
+    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-[-20%] left-[-20%] w-[70vw] h-[70vw] bg-purple-700/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
+        <div class="absolute top-[-20%] right-[-20%] w-[70vw] h-[70vw] bg-cyan-700/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
+        <div class="absolute bottom-[-20%] left-[20%] w-[80vw] h-[80vw] bg-pink-700/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
+        <div class="absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,#ffffff1a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff1a_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+    </div>
+
+    <!-- UI CONTAINER -->
+    <div class="w-full max-w-lg flex flex-col items-center z-10 relative px-4 py-4 md:py-6" id="app-container">
+        
+        <!-- HEADER -->
+        <div class="w-full flex justify-between items-center mb-4 md:mb-8" style="width: min(90vw, 500px);">
+            <div class="flex flex-col">
+                <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500 tracking-tighter flex items-center gap-3 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+                    KENDOKU 
+                    <!-- ZAP ICON -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-[0_0_10px_rgba(250,204,21,0.8)] md:w-8 md:h-8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </h1>
+                <div class="flex items-center gap-3 mt-1 md:mt-2">
+                    <span id="level-display" class="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px] md:text-xs">SEVİYE 01</span>
+                    <span id="difficulty-badge" class="text-[10px] md:text-xs px-2 py-0.5 md:px-3 md:py-1 rounded-sm font-bold uppercase tracking-widest border border-dashed shadow-[0_0_10px_currentColor] text-emerald-400 border-emerald-400/50 bg-emerald-400/10">BAŞLANGIÇ</span>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="btn-info" class="p-2 md:p-3 bg-slate-800/50 border border-slate-700 hover:border-fuchsia-500 hover:shadow-[0_0_15px_rgba(217,70,239,0.4)] text-slate-400 hover:text-fuchsia-400 rounded-lg transition-all" title="NASIL OYNANIR">
+                    <!-- INFO ICON -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:w-6 md:h-6"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <button id="btn-reset" class="p-2 md:p-3 bg-slate-800/50 border border-slate-700 hover:border-cyan-500 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] text-slate-400 hover:text-cyan-400 rounded-lg transition-all group" title="SİSTEMİ SIFIRLA">
+                    <!-- REFRESH ICON -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-700 md:w-6 md:h-6"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"></path><path d="M3 3v9h9"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- GAME BOARD -->
+        <div class="bg-slate-900/50 backdrop-blur-md p-1 md:p-2 rounded-xl border border-slate-700/50 shadow-[0_0_50px_-10px_rgba(6,182,212,0.1)] mb-4 md:mb-8 relative w-fit">
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl border border-cyan-500/30 hidden">
+                <div class="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-t-4 border-b-4 border-cyan-500 mb-4 shadow-[0_0_20px_rgba(6,182,212,0.5)]"></div>
+                <p class="text-cyan-400 font-bold animate-pulse tracking-widest text-xs md:text-sm">VERİ YÜKLENİYOR...</p>
+            </div>
+            
+            <!-- Grid -->
+            <!-- Mobilde daha iyi sığması için width 88vw olarak güncellendi -->
+            <div id="game-grid" class="grid grid-cols-4 bg-slate-800 rounded border border-slate-700 shadow-2xl relative gap-1 p-1" style="width: min(88vw, 450px); aspect-ratio: 1/1; grid-template-rows: repeat(4, 1fr);">
+                <!-- Cells will be generated here by JS -->
+            </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div id="controls-area" class="w-full space-y-3 md:space-y-4" style="width: min(88vw, 500px);">
+            <!-- Numpad -->
+            <div id="numpad" class="grid grid-cols-4 gap-2 md:gap-4 mb-2 md:mb-4">
+                <!-- Buttons generated by JS -->
+            </div>
+            
+            <!-- Delete Button -->
+            <button id="btn-delete" class="w-full h-12 md:h-16 group flex items-center justify-center gap-3 bg-slate-800 hover:bg-rose-900/30 border border-slate-700 hover:border-rose-500/50 text-slate-400 hover:text-rose-400 rounded-lg font-bold text-base md:text-lg font-mono tracking-widest uppercase shadow-[0_4px_0_0_rgba(15,23,42,1)] active:shadow-none active:translate-y-[4px] transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-rose-500 transition-colors"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg> 
+                VERİYİ SİL
+            </button>
+        </div>
+
+        <!-- WIN SCREEN (Hidden by default) -->
+        <div id="win-screen" class="w-full space-y-4 hidden" style="width: min(88vw, 500px);">
+            <div class="bg-gradient-to-r from-emerald-900/80 to-cyan-900/80 border border-emerald-500/50 rounded-xl p-6 text-center animate-in fade-in slide-in-from-bottom-8 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                <div class="bg-emerald-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-400/50 shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-300"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-black mb-2 tracking-tighter text-emerald-300 drop-shadow-[0_0_10px_rgba(110,231,183,0.5)]">GÖREV TAMAMLANDI</h2>
+                <p class="text-emerald-400/80 mb-6 font-mono text-xs md:text-sm tracking-widest">SİSTEM GÜVENLİ</p>
+                <button id="btn-next-level" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-4 px-8 rounded-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg tracking-widest uppercase">
+                    SONRAKİ SEVİYE 
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- INFO MODAL -->
+    <div id="info-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-slate-900 border-2 border-cyan-500 rounded-2xl w-full max-w-3xl p-4 md:p-6 relative shadow-[0_0_50px_rgba(6,182,212,0.3)] max-h-[90vh] overflow-y-auto">
+            <button id="btn-close-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>
+            </button>
+            
+            <h2 class="text-xl md:text-2xl font-black text-cyan-400 mb-4 md:mb-6 flex items-center gap-2 sticky top-0 bg-slate-900 pb-2 z-10 border-b border-slate-800/50">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fill-cyan-400 text-slate-900"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                NASIL OYNANIR?
+            </h2>
+
+            <div class="grid md:grid-cols-2 gap-4 md:gap-8 items-start">
+                <div class="space-y-4 md:space-y-6 text-slate-300 font-mono text-xs md:text-sm leading-relaxed">
+                    <div class="flex gap-4 items-start">
+                        <div class="bg-slate-800 p-2 rounded border border-slate-700 font-bold text-center w-12 shrink-0 text-cyan-400">1-4</div>
+                        <div>
+                            <h3 class="text-white font-bold mb-1">RAKAMLARI YERLEŞTİRİN</h3>
+                            <p>Her satır ve sütunda <span class="text-cyan-400">1, 2, 3 ve 4</span> rakamlarını sadece birer kez kullanmalısınız.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 items-start">
+                        <div class="bg-pink-900/40 p-2 rounded border border-pink-500/50 text-center w-12 shrink-0 text-pink-200 font-bold relative">
+                            <span class="absolute top-0 left-0.5 text-[8px]">3+</span>
+                            <div class="mt-1">?</div>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold mb-1">KAFESLERİ ÇÖZÜN</h3>
+                            <p>Renkli alanlara yazdığınız sayıların sonucu, sol üstteki hedef sayıya eşit olmalı ve orada bulunan işlemle elde edilmelidir.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-900/20 border border-emerald-500/30 p-3 rounded-lg text-xs text-emerald-200/80 italic">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline mr-1"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        İpucu: Tek karelik kafeslerdeki sayı, hedef sayının ta kendisidir!
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center justify-center bg-slate-950/50 p-4 md:p-6 rounded-xl border border-slate-800">
+                    <h3 class="text-cyan-400 font-bold mb-4 tracking-widest text-xs border-b border-cyan-500/30 pb-1 w-full text-center">ÖRNEK ÇÖZÜM</h3>
+                    <!-- Static Example Grid -->
+                    <div class="grid grid-cols-4 gap-1 p-1 bg-slate-800 rounded border border-slate-700 shadow-xl w-40 h-40 md:w-48 md:h-48 mx-auto" style="grid-template-rows: repeat(4, 1fr);">
+                        <!-- Row 1 -->
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-pink-900/60 text-pink-100 border-t border-l border-b border-pink-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">3+</span>2</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-pink-900/60 text-pink-100 border-t border-r border-b border-pink-500/50 rounded-sm overflow-hidden">1</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-cyan-900/60 text-cyan-100 border-t border-l border-b border-cyan-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">7+</span>4</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-cyan-900/60 text-cyan-100 border-t border-r border-b border-cyan-500/50 rounded-sm overflow-hidden">3</div>
+                        
+                        <!-- Row 2 -->
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-emerald-900/60 text-emerald-100 border border-emerald-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">4</span>4</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-purple-900/60 text-purple-100 border-t border-l border-b border-purple-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">6x</span>3</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-purple-900/60 text-purple-100 border-t border-r border-b border-purple-500/50 rounded-sm overflow-hidden">2</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-yellow-900/60 text-yellow-100 border border-yellow-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">1</span>1</div>
+
+                        <!-- Row 3 -->
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-orange-900/60 text-orange-100 border-t border-l border-r border-orange-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">4+</span>1</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-blue-900/60 text-blue-100 border-t border-l border-r border-blue-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">2/</span>2</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-lime-900/60 text-lime-100 border-t border-l border-b border-lime-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">7+</span>3</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-lime-900/60 text-lime-100 border-t border-r border-b border-lime-500/50 rounded-sm overflow-hidden">4</div>
+
+                        <!-- Row 4 -->
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-orange-900/60 text-orange-100 border-b border-l border-r border-orange-500/50 rounded-sm overflow-hidden">3</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-blue-900/60 text-blue-100 border-b border-l border-r border-blue-500/50 rounded-sm overflow-hidden">4</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-red-900/60 text-red-100 border-t border-l border-b border-red-500/50 rounded-sm overflow-hidden"><span class="absolute top-0 left-0.5 text-[8px] opacity-80 font-normal">3+</span>1</div>
+                        <div class="relative flex items-center justify-center font-bold text-base md:text-lg bg-red-900/60 text-red-100 border-t border-r border-b border-red-500/50 rounded-sm overflow-hidden">2</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-start-game" class="w-full mt-8 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all uppercase tracking-widest">SİSTEME GİRİŞ YAP</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- CONSTANTS & CONFIG ---
+        const THEME_STYLES = [
+            { name: 'pink',    bg: 'bg-pink-900/60',    text: 'text-pink-100',    border: 'border-pink-500/50',    selectRing: 'ring-pink-400' },
+            { name: 'cyan',    bg: 'bg-cyan-900/60',    text: 'text-cyan-100',    border: 'border-cyan-500/50',    selectRing: 'ring-cyan-400' },
+            { name: 'purple',  bg: 'bg-purple-900/60',  text: 'text-purple-100',  border: 'border-purple-500/50',  selectRing: 'ring-purple-400' },
+            { name: 'emerald', bg: 'bg-emerald-900/60', text: 'text-emerald-100', border: 'border-emerald-500/50', selectRing: 'ring-emerald-400' },
+            { name: 'yellow',  bg: 'bg-yellow-900/60',  text: 'text-yellow-100',  border: 'border-yellow-500/50',  selectRing: 'ring-yellow-400' },
+            { name: 'orange',  bg: 'bg-orange-900/60',  text: 'text-orange-100',  border: 'border-orange-500/50',  selectRing: 'ring-orange-400' },
+            { name: 'blue',    bg: 'bg-blue-900/60',    text: 'text-blue-100',    border: 'border-blue-500/50',    selectRing: 'ring-blue-400' },
+            { name: 'lime',    bg: 'bg-lime-900/60',    text: 'text-lime-100',    border: 'border-lime-500/50',    selectRing: 'ring-lime-400' },
+            { name: 'red',     bg: 'bg-red-900/60',     text: 'text-red-100',     border: 'border-red-500/50',     selectRing: 'ring-red-400' },
+            { name: 'indigo',  bg: 'bg-indigo-900/60',  text: 'text-indigo-100',  border: 'border-indigo-500/50',  selectRing: 'ring-indigo-400' },
+        ];
+
+        // --- STATE VARIABLES ---
+        let state = {
+            gameData: null,
+            userGrid: Array(4).fill(null).map(() => Array(4).fill('')),
+            selectedCell: null, // [row, col]
+            level: 1,
+            isComplete: false,
+            mistakes: [],
+            audioElement: null,
+            musicStarted: false
+        };
+
+        // --- GAME LOGIC ---
+
+        const generateLatinSquare = () => {
+            const size = 4;
+            const board = Array(size).fill(null).map(() => Array(size).fill(0));
+
+            const isValid = (board, row, col, num) => {
+                for (let x = 0; x < size; x++) {
+                    if (board[row][x] === num || board[x][col] === num) return false;
+                }
+                return true;
+            };
+
+            const fillBoard = (row, col) => {
+                if (row === size) return true;
+                const nextRow = col === size - 1 ? row + 1 : row;
+                const nextCol = col === size - 1 ? 0 : col + 1;
+                const nums = [1, 2, 3, 4].sort(() => Math.random() - 0.5);
+
+                for (let num of nums) {
+                    if (isValid(board, row, col, num)) {
+                        board[row][col] = num;
+                        if (fillBoard(nextRow, nextCol)) return true;
+                        board[row][col] = 0;
+                    }
+                }
+                return false;
+            };
+
+            fillBoard(0, 0);
+            return board;
+        };
+
+        const getDifficultyParams = (level) => {
+            if (level <= 2) return { label: 'BAŞLANGIÇ', maxCageSize: 3, color: 'text-emerald-400 border-emerald-400/50 bg-emerald-400/10' }; 
+            if (level <= 5) return { label: 'ACEMİ AĞI', maxCageSize: 3, color: 'text-cyan-400 border-cyan-400/50 bg-cyan-400/10' };       
+            if (level <= 10) return { label: 'SİBER UZMAN', maxCageSize: 4, color: 'text-purple-400 border-purple-400/50 bg-purple-400/10' };
+            return { label: 'SİBER ÇILGIN', maxCageSize: 5, color: 'text-rose-500 border-rose-500/50 bg-rose-500/10 animate-pulse' }; 
+        };
+
+        const generateCages = (solutionBoard, difficultyParams) => {
+            const size = 4;
+            const visited = Array(size).fill(false).map(() => Array(size).fill(false));
+            const cages = [];
+            const shuffledStyles = [...THEME_STYLES].sort(() => Math.random() - 0.5);
+
+            const getNeighbors = (r, c) => {
+                const neighbors = [];
+                if (r > 0) neighbors.push([r - 1, c]);
+                if (r < size - 1) neighbors.push([r + 1, c]);
+                if (c > 0) neighbors.push([r, c - 1]);
+                if (c < size - 1) neighbors.push([r, c + 1]);
+                return neighbors;
+            };
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (visited[r][c]) continue;
+
+                    const minSize = 2;
+                    let targetSize = Math.floor(Math.random() * (difficultyParams.maxCageSize - minSize + 1)) + minSize;
+                    const cageCells = [[r, c]];
+                    visited[r][c] = true;
+
+                    let currentSize = 1;
+                    while (currentSize < targetSize) {
+                        const candidates = [];
+                        for (let [cr, cc] of cageCells) {
+                            const neighbors = getNeighbors(cr, cc);
+                            for (let [nr, nc] of neighbors) {
+                                if (!visited[nr][nc]) {
+                                    if (!candidates.some(([xr, xc]) => xr === nr && xc === nc)) {
+                                        candidates.push([nr, nc]);
+                                    }
+                                }
+                            }
+                        }
+                        if (candidates.length === 0) break;
+                        const [nextR, nextC] = candidates[Math.floor(Math.random() * candidates.length)];
+                        visited[nextR][nextC] = true;
+                        cageCells.push([nextR, nextC]);
+                        currentSize++;
+                    }
+
+                    const values = cageCells.map(([cr, cc]) => solutionBoard[cr][cc]);
+                    let target = 0;
+                    let operator = '';
+
+                    if (cageCells.length === 1) {
+                        target = values[0];
+                        operator = ''; 
+                    } else {
+                        const ops = ['+', '*', '-', '/'];
+                        const validOps = ['+', '*'];
+                        if (values.length === 2) {
+                            const max = Math.max(...values);
+                            const min = Math.min(...values);
+                            validOps.push('-');
+                            if (max % min === 0) validOps.push('/');
+                        }
+                        operator = validOps[Math.floor(Math.random() * validOps.length)];
+
+                        if (operator === '+') target = values.reduce((a, b) => a + b, 0);
+                        else if (operator === '*') target = values.reduce((a, b) => a * b, 1);
+                        else if (operator === '-') target = Math.max(...values) - Math.min(...values);
+                        else if (operator === '/') target = Math.max(...values) / Math.min(...values);
+                    }
+
+                    cages.push({
+                        id: cages.length,
+                        cells: cageCells,
+                        target,
+                        operator,
+                        style: shuffledStyles[cages.length % shuffledStyles.length]
+                    });
+                }
+            }
+            return cages;
+        };
+
+        const solvePuzzleCount = (cages) => {
+            const size = 4;
+            let solutions = 0;
+            const board = Array(size).fill(0).map(() => Array(size).fill(0));
+            const cellToCage = {};
+            cages.forEach(cage => {
+                cage.cells.forEach(([r, c]) => { cellToCage[`${r},${c}`] = cage; });
+            });
+
+            const checkCage = (cage, currentBoard) => {
+                const values = [];
+                let isFull = true;
+                for (let [r, c] of cage.cells) {
+                    if (currentBoard[r][c] === 0) { isFull = false; break; }
+                    values.push(currentBoard[r][c]);
+                }
+                if (!isFull) return true;
+
+                if (cage.operator === '') return values[0] === cage.target;
+                if (cage.operator === '+') return values.reduce((a, b) => a + b, 0) === cage.target;
+                if (cage.operator === '*') return values.reduce((a, b) => a * b, 1) === cage.target;
+                if (cage.operator === '-') {
+                    if (values.length !== 2) return false;
+                    return Math.abs(values[0] - values[1]) === cage.target;
+                }
+                if (cage.operator === '/') {
+                    if (values.length !== 2) return false;
+                    const max = Math.max(values[0], values[1]);
+                    const min = Math.min(values[0], values[1]);
+                    return (max / min) === cage.target;
+                }
+                return false;
+            };
+
+            const solve = (row, col) => {
+                if (solutions > 1) return;
+                if (row === size) { solutions++; return; }
+                const nextRow = col === size - 1 ? row + 1 : row;
+                const nextCol = col === size - 1 ? 0 : col + 1;
+
+                for (let num = 1; num <= 4; num++) {
+                    let valid = true;
+                    for (let i = 0; i < row; i++) if (board[i][col] === num) valid = false;
+                    for (let i = 0; i < col; i++) if (board[row][i] === num) valid = false;
+                    if (!valid) continue;
+                    board[row][col] = num;
+                    const currentCage = cellToCage[`${row},${col}`];
+                    let isLastInCage = true;
+                    for(let [cr, cc] of currentCage.cells) {
+                        if (board[cr][cc] === 0) isLastInCage = false;
+                    }
+                    if (isLastInCage) {
+                        if (checkCage(currentCage, board)) solve(nextRow, nextCol);
+                    } else {
+                        solve(nextRow, nextCol);
+                    }
+                    board[row][col] = 0;
+                }
+            };
+            solve(0, 0);
+            return solutions;
+        };
+
+        const createUniquePuzzle = (level) => {
+            let unique = false;
+            let solution, cages;
+            let attempts = 0;
+            const difficultyParams = getDifficultyParams(level);
+            const maxAttempts = 500; 
+
+            while (!unique && attempts < maxAttempts) {
+                solution = generateLatinSquare();
+                cages = generateCages(solution, difficultyParams);
+                const count = solvePuzzleCount(cages);
+                if (count === 1) unique = true;
+                attempts++;
+            }
+            if (!unique) return createUniquePuzzle(level > 1 ? level - 1 : 1);
+
+            const cageMap = Array(4).fill(null).map(() => Array(4).fill(null));
+            cages.forEach(cage => {
+                cage.cells.forEach(([r, c]) => { cageMap[r][c] = cage; });
+            });
+            return { solution, cages, cageMap, difficultyParams };
+        };
+
+        // --- AUDIO ENGINE (HTML5 AUDIO) ---
+        const initAudio = () => {
+            if (state.musicStarted) return;
+            try {
+                // Drone veya sentezleyici yok, doğrudan dosya yükleme
+                const audio = new Audio('1.mp3');
+                audio.loop = true;
+                audio.volume = 0.1; // %50 ses seviyesi
+                
+                // Kullanıcı etkileşimi olduğu için (butona basıldı) play() çalışacaktır
+                audio.play().catch(e => {
+                    console.log("Ses dosyası (1.mp3) bulunamadı veya oynatılamadı:", e);
+                });
+                
+                state.audioElement = audio;
+                state.musicStarted = true;
+            } catch(e) {
+                console.log("Audio Error:", e);
+            }
+        };
+
+        // --- RENDER & INTERACTION ---
+
+        const dom = {
+            levelDisplay: document.getElementById('level-display'),
+            difficultyBadge: document.getElementById('difficulty-badge'),
+            gameGrid: document.getElementById('game-grid'),
+            loadingOverlay: document.getElementById('loading-overlay'),
+            numpad: document.getElementById('numpad'),
+            winScreen: document.getElementById('win-screen'),
+            controlsArea: document.getElementById('controls-area'),
+            infoModal: document.getElementById('info-modal'),
+            btnReset: document.getElementById('btn-reset'),
+            btnInfo: document.getElementById('btn-info'),
+            btnCloseModal: document.getElementById('btn-close-modal'),
+            btnStartGame: document.getElementById('btn-start-game'),
+            btnDelete: document.getElementById('btn-delete'),
+            btnNextLevel: document.getElementById('btn-next-level')
+        };
+
+        const renderGrid = () => {
+            dom.gameGrid.innerHTML = '';
+            if (!state.gameData) return;
+
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const val = state.userGrid[r][c];
+                    const cage = state.gameData.cageMap[r][c];
+                    const isSelected = state.selectedCell && state.selectedCell[0] === r && state.selectedCell[1] === c;
+                    const isError = state.mistakes.some(m => m[0] === r && m[1] === c);
+                    
+                    // Cage Label
+                    let cageLabelHtml = '';
+                    const sortedCells = [...cage.cells].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+                    if (sortedCells[0][0] === r && sortedCells[0][1] === c) {
+                        cageLabelHtml = `<span class="absolute top-0.5 left-1 text-[10px] md:text-xs font-bold opacity-80 z-0 leading-tight pointer-events-none">${cage.target}${cage.operator}</span>`;
+                    }
+
+                    // Border Logic
+                    let borderClasses = '';
+                    const borderColor = cage.style.border; // e.g. "border-pink-500/50"
+                    // Helper to check neighbor cage
+                    const check = (nr, nc) => {
+                        if (nr < 0 || nr > 3 || nc < 0 || nc > 3) return true; // Edge of board
+                        return state.gameData.cageMap[nr][nc].id !== cage.id;
+                    };
+                    if (check(r-1, c)) borderClasses += `border-t ${borderColor} `;
+                    if (check(r+1, c)) borderClasses += `border-b ${borderColor} `;
+                    if (check(r, c-1)) borderClasses += `border-l ${borderColor} `;
+                    if (check(r, c+1)) borderClasses += `border-r ${borderColor} `;
+
+                    // Style classes
+                    let bgText = `${cage.style.bg} ${cage.style.text}`;
+                    let selectedClass = isSelected ? `brightness-125 z-20 ring-2 ring-inset ${cage.style.selectRing || 'ring-white'}` : 'hover:brightness-110';
+                    let errorClass = isError ? '!bg-red-900/80 !text-red-200 !border-red-500 animate-pulse' : '';
+                    let completeClass = state.isComplete ? '!bg-emerald-900/60 !text-emerald-300' : '';
+
+                    const cellDiv = document.createElement('div');
+                    // "div" olduğu için tabindex yok, odaklanamaz, klavye açmaz.
+                    cellDiv.className = `relative flex items-center justify-center text-4xl md:text-5xl font-bold font-mono cursor-pointer transition-all duration-100 select-none w-full h-full overflow-hidden rounded-sm ${borderClasses} ${bgText} ${selectedClass} ${errorClass} ${completeClass}`;
+                    cellDiv.innerHTML = `${cageLabelHtml}<span class="drop-shadow-[0_0_5px_currentColor] transition-transform duration-200 ${val ? 'scale-100' : 'scale-0'}">${val}</span>`;
+                    
+                    // Touch start ve click kullanımı
+                    const handleInteraction = (e) => {
+                        e.preventDefault(); // Varsayılan dokunma davranışlarını (zoom vb.) engelle
+                        if (state.isComplete) return;
+                        state.selectedCell = [r, c];
+                        renderGrid(); 
+                    };
+
+                    cellDiv.onclick = handleInteraction;
+                    // Touch events for quicker response on mobile
+                    cellDiv.ontouchstart = handleInteraction;
+
+                    dom.gameGrid.appendChild(cellDiv);
+                }
+            }
+        };
+
+        const renderUI = () => {
+            // Header
+            dom.levelDisplay.innerText = `SEVİYE ${state.level.toString().padStart(2, '0')}`;
+            if (state.gameData) {
+                dom.difficultyBadge.className = `text-[10px] md:text-xs px-3 py-1 rounded-sm font-bold uppercase tracking-widest border border-dashed shadow-[0_0_10px_currentColor] ${state.gameData.difficultyParams.color}`;
+                dom.difficultyBadge.innerText = state.gameData.difficultyParams.label;
+            }
+
+            // Controls
+            if (state.isComplete) {
+                dom.controlsArea.classList.add('hidden');
+                dom.winScreen.classList.remove('hidden');
+            } else {
+                dom.controlsArea.classList.remove('hidden');
+                dom.winScreen.classList.add('hidden');
+            }
+        };
+
+        const initNumpad = () => {
+            dom.numpad.innerHTML = '';
+            [1, 2, 3, 4].forEach(num => {
+                const btn = document.createElement('button');
+                // touch-action manipulation zaten body'de var ama burada da garanti olsun
+                btn.className = "h-14 md:h-20 relative overflow-hidden group bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500 text-cyan-500 hover:text-cyan-300 rounded-lg text-3xl md:text-4xl font-bold font-mono shadow-[0_4px_0_0_rgba(15,23,42,1)] active:shadow-none active:translate-y-[4px] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 touch-manipulation";
+                btn.innerHTML = `<span class="relative z-10 drop-shadow-[0_0_8px_currentColor]">${num}</span><div class="absolute inset-0 bg-cyan-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>`;
+                
+                const handlePress = (e) => {
+                    e.preventDefault();
+                    handleInput(num);
+                };
+                
+                btn.onclick = handlePress;
+                btn.ontouchstart = handlePress;
+                
+                dom.numpad.appendChild(btn);
+            });
+        };
+
+        // --- ACTIONS ---
+
+        const startLevel = () => {
+            dom.loadingOverlay.classList.remove('hidden');
+            // Timeout to allow UI update
+            setTimeout(() => {
+                const data = createUniquePuzzle(state.level);
+                state.gameData = data;
+                state.userGrid = Array(4).fill(null).map(() => Array(4).fill(''));
+                state.isComplete = false;
+                state.mistakes = [];
+                state.selectedCell = null;
+                
+                renderGrid();
+                renderUI();
+                dom.loadingOverlay.classList.add('hidden');
+            }, 100);
+        };
+
+        const checkCompletion = () => {
+            // Check full
+            for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (state.userGrid[r][c] === '') return;
+
+            const errors = [];
+            const board = state.userGrid.map(row => row.map(cell => parseInt(cell) || 0));
+
+            // Latin Square check
+            for (let i = 0; i < 4; i++) {
+                const rowSet = new Set();
+                const colSet = new Set();
+                for (let j = 0; j < 4; j++) {
+                    if (rowSet.has(board[i][j])) for(let k=0; k<4; k++) errors.push([i, k]);
+                    rowSet.add(board[i][j]);
+                    if (colSet.has(board[j][i])) for(let k=0; k<4; k++) errors.push([k, i]);
+                    colSet.add(board[j][i]);
+                }
+            }
+
+            // Math check
+            state.gameData.cages.forEach(cage => {
+                const values = cage.cells.map(([r, c]) => board[r][c]);
+                let isValid = false;
+                if (cage.operator === '') isValid = values[0] === cage.target;
+                else if (cage.operator === '+') isValid = values.reduce((a, b) => a + b, 0) === cage.target;
+                else if (cage.operator === '*') isValid = values.reduce((a, b) => a * b, 1) === cage.target;
+                else if (cage.operator === '-') isValid = Math.abs(values[0] - values[1]) === cage.target;
+                else if (cage.operator === '/') {
+                    const max = Math.max(...values);
+                    const min = Math.min(...values);
+                    isValid = (max / min) === cage.target;
+                }
+                if (!isValid) cage.cells.forEach(cell => errors.push(cell));
+            });
+
+            state.mistakes = errors;
+            if (errors.length === 0) {
+                state.isComplete = true;
+            }
+            renderGrid();
+            renderUI();
+        };
+
+        const handleInput = (num) => {
+            if (!state.selectedCell || state.isComplete) return;
+            const [r, c] = state.selectedCell;
+            const newVal = state.userGrid[r][c] === num ? '' : num;
+            state.userGrid[r][c] = newVal;
+            state.mistakes = state.mistakes.filter(m => !(m[0] === r && m[1] === c));
+            checkCompletion();
+            renderGrid(); // update grid UI for number
+        };
+
+        const handleDelete = () => {
+            if (!state.selectedCell || state.isComplete) return;
+            const [r, c] = state.selectedCell;
+            state.userGrid[r][c] = '';
+            state.mistakes = state.mistakes.filter(m => !(m[0] === r && m[1] === c));
+            renderGrid();
+        };
+
+        // --- EVENTS ---
+
+        // Keyboard
+        window.addEventListener('keydown', (e) => {
+            if (state.isComplete) return;
+            if (state.selectedCell) {
+                const [r, c] = state.selectedCell;
+                if (e.key === 'ArrowUp') { e.preventDefault(); state.selectedCell = [Math.max(0, r - 1), c]; renderGrid(); }
+                else if (e.key === 'ArrowDown') { e.preventDefault(); state.selectedCell = [Math.min(3, r + 1), c]; renderGrid(); }
+                else if (e.key === 'ArrowLeft') { e.preventDefault(); state.selectedCell = [r, Math.max(0, c - 1)]; renderGrid(); }
+                else if (e.key === 'ArrowRight') { e.preventDefault(); state.selectedCell = [r, Math.min(3, c + 1)]; renderGrid(); }
+            }
+            if (['1', '2', '3', '4'].includes(e.key)) {
+                if (state.selectedCell) handleInput(parseInt(e.key));
+            }
+            if (e.key === 'Backspace' || e.key === 'Delete') handleDelete();
+        });
+
+        // Buttons
+        dom.btnReset.onclick = () => { state.level = 1; startLevel(); };
+        dom.btnDelete.onclick = handleDelete;
+        dom.btnDelete.ontouchstart = (e) => { e.preventDefault(); handleDelete(); }; // Touch support
+        dom.btnNextLevel.onclick = () => { state.level++; startLevel(); };
+        dom.btnNextLevel.ontouchstart = (e) => { e.preventDefault(); state.level++; startLevel(); };
+        
+        // Modal & Audio
+        const openModal = () => { dom.infoModal.classList.remove('hidden'); dom.infoModal.classList.remove('opacity-0'); };
+        const closeModal = () => { dom.infoModal.classList.add('opacity-0'); setTimeout(() => dom.infoModal.classList.add('hidden'), 300); };
+        
+        dom.btnInfo.onclick = openModal;
+        dom.btnCloseModal.onclick = closeModal;
+        dom.btnStartGame.onclick = () => {
+            initAudio();
+            closeModal();
+        };
+
+        // --- INIT ---
+        initNumpad();
+        startLevel(); // Start Level 1 immediately
+
+    </script>
+</body>
+</html>
